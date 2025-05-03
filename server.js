@@ -5,30 +5,31 @@ const cors = require("cors");
 
 const app = express();
 
-// ✅ Allow cross-origin requests from any website
+// ✅ Enable CORS for all origins
 app.use(cors({ origin: "*", methods: ["POST"] }));
 
 // ✅ Support large HTML payloads
 app.use(bodyParser.json({ limit: "5mb" }));
 
-// ✅ Read your OpenAI API key from environment (Render → Environment)
+// ✅ Read OpenAI key from Render environment
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 
-// ✅ Accessibility audit endpoint
+// ✅ POST /audit: receive HTML, return accessibility audit from ChatGPT
 app.post("/audit", async (req, res) => {
   const { html, url } = req.body;
 
   const prompt = `
-You are a web accessibility expert. Analyze the HTML below and return a structured accessibility audit using WCAG 2.1 AA guidelines. 
-The report should include:
-- Priority level (critical, serious, moderate, minor)
-- Description of the issue
-- Affected user groups (e.g. screen reader, keyboard-only)
-- WCAG reference (principle, criterion number, and URL)
-- HTML snippet if relevant
-- Recommendation to fix the issue
+You are a web accessibility expert. Analyze the following HTML and identify any accessibility issues based on WCAG 2.1 AA standards.
 
-HTML:
+Return a structured report with:
+- Priority level (critical, serious, moderate, minor)
+- Issue type and short summary
+- Affected user groups (e.g., screen reader, keyboard-only)
+- HTML snippet (if applicable)
+- WCAG reference (principle, criterion number, URL)
+- Recommendation to fix each issue
+
+HTML to analyze:
 ${html}
 `;
 
@@ -41,21 +42,23 @@ ${html}
         "Authorization": `Bearer ${OPENAI_API_KEY}`
       },
       data: {
-        model: "gpt-3.5-turbo",
+        model: "gpt-3.5-turbo-1106", // ✅ Reliable, fast, good for large input
         messages: [{ role: "user", content: prompt }],
         temperature: 0.2
       }
     });
 
     const result = response.data.choices[0].message.content;
-    console.log("ChatGPT audit result:", result); // For Render logs
+    console.log("✅ ChatGPT audit result:\n", result);
     res.json({ report: result });
   } catch (e) {
-    console.error("OpenAI API error:", e.message);
-    res.status(500).json({ error: "Audit failed", details: e.message });
+    console.error("❌ OpenAI API error:", e.message);
+    const status = e?.response?.status || 500;
+    const msg = e?.response?.data?.error?.message || e.message;
+    res.status(status).json({ error: "Audit failed", details: msg });
   }
 });
 
 // ✅ Start the server
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
