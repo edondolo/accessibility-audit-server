@@ -12,7 +12,7 @@ const corsOptions = {
   allowedHeaders: ["Content-Type"]
 };
 app.use(cors(corsOptions));
-app.use(bodyParser.json());
+app.use(bodyParser.json({ limit: "5mb" }));
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
