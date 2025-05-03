@@ -38,23 +38,23 @@ ${html}
   try {
     // ✅ Gemini API request
     const response = await axios({
-      method: "post",
-      url: `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${GEMINI_API_KEY}`,
-      headers: {
-        "Content-Type": "application/json"
-      },
-      data: {
-        contents: [
+  method: "post",
+  url: `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${GEMINI_API_KEY}`,
+  headers: {
+    "Content-Type": "application/json"
+  },
+  data: {
+    contents: [
+      {
+        parts: [
           {
-            parts: [
-              {
-                text: prompt
-              }
-            ]
+            text: prompt
           }
         ]
       }
-    });
+    ]
+  }
+});
 
     // ✅ Return the structured audit response to the browser
     res.json({ report: response.data });
