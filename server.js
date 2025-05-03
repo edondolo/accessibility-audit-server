@@ -5,25 +5,31 @@ const cors = require("cors");
 
 const app = express();
 
+// ✅ Allow requests from any origin
 app.use(cors({ origin: "*", methods: ["POST"] }));
+
+// ✅ Allow large HTML payloads
 app.use(bodyParser.json({ limit: "5mb" }));
 
+// ✅ OpenAI API Key from Render environment
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 
+// ✅ POST /audit: receives page HTML and returns accessibility report
 app.post("/audit", async (req, res) => {
   const { html, url } = req.body;
 
   const prompt = `
-You are a web accessibility expert. Analyze the following HTML and identify all accessibility issues based on WCAG 2.1 AA. Return a structured report with:
+You are a senior accessibility expert. Review the following HTML and identify any accessibility issues following WCAG 2.1 AA. 
+Return a structured, human-readable report with:
 
-- Priority (critical, serious, moderate, minor)
-- Issue type and summary
-- Affected user group (e.g. screen reader, keyboard-only)
-- Short HTML snippet if relevant
-- WCAG reference (principle, number, and link)
-- Recommendation to fix
+- Priority level (critical, serious, moderate, minor)
+- Description of each issue
+- Affected user groups (e.g., screen reader, keyboard-only)
+- WCAG reference (principle, criterion number, link)
+- A small HTML snippet if relevant
+- Clear recommendation to fix
 
-HTML:
+HTML content:
 ${html}
 `;
 
@@ -43,6 +49,7 @@ ${html}
     });
 
     const result = response.data.choices[0].message.content;
+    console.log("ChatGPT response:", result); // ✅ Debugging log
     res.json({ report: result });
   } catch (e) {
     console.error("OpenAI API error:", e.message);
@@ -50,5 +57,6 @@ ${html}
   }
 });
 
+// ✅ Start server
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
