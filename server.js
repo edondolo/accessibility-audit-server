@@ -5,67 +5,50 @@ const cors = require("cors");
 
 const app = express();
 
-// ✅ Enable CORS for all origins
-const corsOptions = {
-  origin: "*",
-  methods: ["POST", "GET", "OPTIONS"],
-  allowedHeaders: ["Content-Type"]
-};
-app.use(cors(corsOptions));
+app.use(cors({ origin: "*", methods: ["POST"] }));
 app.use(bodyParser.json({ limit: "5mb" }));
 
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 
-// ✅ POST /audit — performs accessibility audit using Gemini
 app.post("/audit", async (req, res) => {
   const { html, url } = req.body;
 
-  // 🧠 The prompt we'll send to Gemini
   const prompt = `
-You are a web accessibility expert. Analyze the HTML below using WCAG 2.1 AA guidelines.
-Return a structured report of accessibility issues including:
-- Priority (critical, serious, moderate, minor)
-- Type and summary of the issue
-- Affected user type (e.g. screen reader users, keyboard-only users)
-- HTML snippet or location if obvious
-- WCAG reference (principle, number, and URL)
-- Recommendation on how to fix the issue
+You are a web accessibility expert. Analyze the following HTML and identify all accessibility issues based on WCAG 2.1 AA. Return a structured report with:
 
-HTML to analyze:
+- Priority (critical, serious, moderate, minor)
+- Issue type and summary
+- Affected user group (e.g. screen reader, keyboard-only)
+- Short HTML snippet if relevant
+- WCAG reference (principle, number, and link)
+- Recommendation to fix
+
+HTML:
 ${html}
 `;
 
   try {
-    // ✅ Gemini API request
     const response = await axios({
-  method: "post",
-  url: `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${GEMINI_API_KEY}`,
-  headers: {
-    "Content-Type": "application/json"
-  },
-  data: {
-    contents: [
-      {
-        parts: [
-          {
-            text: prompt
-          }
-        ]
+      method: "post",
+      url: "https://api.openai.com/v1/chat/completions",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${OPENAI_API_KEY}`
+      },
+      data: {
+        model: "gpt-4",
+        messages: [{ role: "user", content: prompt }],
+        temperature: 0.2
       }
-    ]
-  }
-});
+    });
 
-    // ✅ Return the structured audit response to the browser
-    res.json({ report: response.data });
+    const result = response.data.choices[0].message.content;
+    res.json({ report: result });
   } catch (e) {
-    console.error("Gemini request failed:", e.message);
+    console.error("OpenAI API error:", e.message);
     res.status(500).json({ error: "Audit failed", details: e.message });
   }
 });
 
-// ✅ Start the server
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log("Server running on port", PORT);
-});
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
