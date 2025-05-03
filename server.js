@@ -5,31 +5,30 @@ const cors = require("cors");
 
 const app = express();
 
-// ✅ Allow requests from any origin
+// ✅ Allow cross-origin requests from any website
 app.use(cors({ origin: "*", methods: ["POST"] }));
 
-// ✅ Allow large HTML payloads
+// ✅ Support large HTML payloads
 app.use(bodyParser.json({ limit: "5mb" }));
 
-// ✅ OpenAI API Key from Render environment
+// ✅ Read your OpenAI API key from environment (Render → Environment)
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 
-// ✅ POST /audit: receives page HTML and returns accessibility report
+// ✅ Accessibility audit endpoint
 app.post("/audit", async (req, res) => {
   const { html, url } = req.body;
 
   const prompt = `
-You are a senior accessibility expert. Review the following HTML and identify any accessibility issues following WCAG 2.1 AA. 
-Return a structured, human-readable report with:
-
+You are a web accessibility expert. Analyze the HTML below and return a structured accessibility audit using WCAG 2.1 AA guidelines. 
+The report should include:
 - Priority level (critical, serious, moderate, minor)
-- Description of each issue
-- Affected user groups (e.g., screen reader, keyboard-only)
-- WCAG reference (principle, criterion number, link)
-- A small HTML snippet if relevant
-- Clear recommendation to fix
+- Description of the issue
+- Affected user groups (e.g. screen reader, keyboard-only)
+- WCAG reference (principle, criterion number, and URL)
+- HTML snippet if relevant
+- Recommendation to fix the issue
 
-HTML content:
+HTML:
 ${html}
 `;
 
@@ -42,14 +41,14 @@ ${html}
         "Authorization": `Bearer ${OPENAI_API_KEY}`
       },
       data: {
-        model: "gpt-4",
+        model: "gpt-3.5-turbo",
         messages: [{ role: "user", content: prompt }],
         temperature: 0.2
       }
     });
 
     const result = response.data.choices[0].message.content;
-    console.log("ChatGPT response:", result); // ✅ Debugging log
+    console.log("ChatGPT audit result:", result); // For Render logs
     res.json({ report: result });
   } catch (e) {
     console.error("OpenAI API error:", e.message);
@@ -57,6 +56,6 @@ ${html}
   }
 });
 
-// ✅ Start server
+// ✅ Start the server
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
