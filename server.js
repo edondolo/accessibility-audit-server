@@ -5,14 +5,16 @@ const axios = require("axios");
 const app = express();
 app.use(bodyParser.json());
 
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+
 app.post("/audit", async (req, res) => {
-  const { key, html, url } = req.body;
-  const prompt = `You are an expert in accessibility and WCAG 2.1. Analyze the following HTML and provide a structured report of issues:\n\n${html}`;
+  const { html, url } = req.body;
+  const prompt = `You are an expert in accessibility and WCAG 2.1. Analyze the following HTML and provide a structured list of accessibility issues:\n\n${html}`;
   try {
     const response = await axios.post(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${key}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${GEMINI_API_KEY}`,
       {
-        contents: [{ parts: [{ text: prompt }] }],
+        contents: [{ parts: [{ text: prompt }] }]
       }
     );
     res.json({ report: response.data });
