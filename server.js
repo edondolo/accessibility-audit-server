@@ -14,18 +14,21 @@ app.post("/audit", async (req, res) => {
   const { html, url } = req.body;
 
   const prompt = `
-You are a web accessibility expert. Analyze the HTML below and return a JSON array of accessibility issues following WCAG 2.1 AA. For each issue, include:
+You are a senior accessibility expert.
 
-- "summary": short label of the issue (e.g., "Missing alt text")
-- "priority": one of "critical", "serious", "moderate", or "minor"
-- "selector": a CSS selector or matching hint like "img", "a[href='']", etc.
-- "htmlSnippet": a small code snippet
-- "wcag": the WCAG reference (e.g. "1.1.1 Non-text Content")
-- "fix": a brief recommendation
+Analyze the following HTML and return a JSON array of accessibility issues using **WCAG 2.1 AA** standards. For each issue, return an object with:
 
-Respond with only the JSON array. No explanation.
+- "summary": short label (e.g., "Missing alt text")
+- "priority": "critical", "serious", "moderate", or "minor"
+- "selector": a simple CSS selector that identifies the element(s)
+- "wcag": include both the number and full name (e.g., "1.1.1 Non-text Content") and the official WCAG link
+- "fix": clear, specific recommendation for how to fix the issue
 
-HTML to analyze:
+Group similar issues (e.g., multiple images without alt text) where possible to reduce length.
+
+Respond ONLY with the raw JSON array. Do not include intro or explanation.
+
+HTML:
 ${html}
 `;
 
@@ -45,8 +48,8 @@ ${html}
     });
 
     const raw = response.data.choices[0].message.content;
-    const parsed = JSON.parse(raw); // it's a JSON string that contains an array
-    res.json(parsed); // ✅ Return the array directly, not wrapped in { issues: ... }
+    const parsed = JSON.parse(raw); // converts JSON string into real JS array
+    res.json(parsed); // send the array directly to the client
   } catch (e) {
     const status = e?.response?.status || 500;
     const msg = e?.response?.data?.error?.message || e.message;
