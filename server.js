@@ -45,8 +45,8 @@ ${html}
     });
 
     const raw = response.data.choices[0].message.content;
-    const parsed = JSON.parse(raw); // ✅ convert stringified JSON into array
-    res.json({ issues: parsed });
+    const parsed = JSON.parse(raw); // it's a JSON string that contains an array
+    res.json(parsed); // ✅ Return the array directly, not wrapped in { issues: ... }
   } catch (e) {
     const status = e?.response?.status || 500;
     const msg = e?.response?.data?.error?.message || e.message;
