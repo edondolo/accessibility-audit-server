@@ -14,21 +14,25 @@ app.post("/audit", async (req, res) => {
   const { html, url } = req.body;
 
   const prompt = `
-You are a senior accessibility expert.
+You are a senior web accessibility auditor.
 
-Analyze the following HTML and return a JSON array of accessibility issues using **WCAG 2.1 AA** standards. For each issue, return an object with:
+Analyze the following HTML according to **WCAG 2.1 AA**. Return your response as a **JSON array** of accessibility issues.
 
-- "summary": short label (e.g., "Missing alt text")
-- "priority": "critical", "serious", "moderate", or "minor"
-- "selector": a simple CSS selector that identifies the element(s)
-- "wcag": include both the number and full name (e.g., "1.1.1 Non-text Content") and the official WCAG link
-- "fix": clear, specific recommendation for how to fix the issue
+For each issue, include:
 
-Group similar issues (e.g., multiple images without alt text) where possible to reduce length.
+- "summary": Short description of the issue (e.g., "Missing alt text")
+- "priority": One of: "critical", "serious", "moderate", or "minor"
+- "selector": A simple CSS selector to identify the element(s)
+- "fix": A clear, specific recommendation
+- "wcag": an object with:
+  - "number": WCAG success criterion (e.g., "1.1.1")
+  - "name": Criterion name (e.g., "Non-text Content")
+  - "link": Full WCAG documentation link (e.g., "https://www.w3.org/WAI/WCAG21/Understanding/non-text-content")
 
-Respond ONLY with the raw JSON array. Do not include intro or explanation.
+Group similar issues when possible, but preserve useful selectors.  
+⚠️ Return **only a raw JSON array**. Do NOT include any explanation or commentary.
 
-HTML:
+HTML to audit:
 ${html}
 `;
 
@@ -48,8 +52,8 @@ ${html}
     });
 
     const raw = response.data.choices[0].message.content;
-    const parsed = JSON.parse(raw); // converts JSON string into real JS array
-    res.json(parsed); // send the array directly to the client
+    const parsed = JSON.parse(raw); // ensure array format
+    res.json(parsed); // send plain array to the client
   } catch (e) {
     const status = e?.response?.status || 500;
     const msg = e?.response?.data?.error?.message || e.message;
