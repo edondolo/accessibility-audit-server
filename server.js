@@ -16,21 +16,22 @@ app.post("/audit", async (req, res) => {
   const prompt = `
 You are a senior web accessibility auditor.
 
-Analyze the following HTML according to **WCAG 2.1 AA**. Return your response as a **JSON array** of accessibility issues.
+Analyze the following HTML according to **WCAG 2.1 AA** and return a JSON array of 3–5 **distinct** accessibility issues.
 
-For each issue, include:
+Each object in the array must include:
 
-- "summary": Short description of the issue (e.g., "Missing alt text")
-- "priority": One of: "critical", "serious", "moderate", or "minor"
-- "selector": A simple CSS selector to identify the element(s)
-- "fix": A clear, specific recommendation
+- "summary": short description of the issue (e.g., "Missing alt text")
+- "priority": one of: "critical", "serious", "moderate", "minor"
+- "selector": a valid CSS selector that matches the problem element(s)
+- "fix": a specific, actionable recommendation
 - "wcag": an object with:
-  - "number": WCAG success criterion (e.g., "1.1.1")
-  - "name": Criterion name (e.g., "Non-text Content")
-  - "link": Full WCAG documentation link (e.g., "https://www.w3.org/WAI/WCAG21/Understanding/non-text-content")
+  - "number": e.g. "1.1.1"
+  - "name": e.g. "Non-text Content"
+  - "link": e.g. "https://www.w3.org/WAI/WCAG21/Understanding/non-text-content"
 
-Group similar issues when possible, but preserve useful selectors.  
-⚠️ Return **only a raw JSON array**. Do NOT include any explanation or commentary.
+Respond ONLY with a clean JSON array.  
+Do not include explanations, intros, or extra text.  
+Avoid vague or overly generic issues — use real examples from the provided HTML.
 
 HTML to audit:
 ${html}
@@ -52,8 +53,8 @@ ${html}
     });
 
     const raw = response.data.choices[0].message.content;
-    const parsed = JSON.parse(raw); // ensure array format
-    res.json(parsed); // send plain array to the client
+    const parsed = JSON.parse(raw); // Ensure it's an array
+    res.json(parsed); // Return directly to client
   } catch (e) {
     const status = e?.response?.status || 500;
     const msg = e?.response?.data?.error?.message || e.message;
@@ -63,4 +64,4 @@ ${html}
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
+app.listen(PORT, () => console.log(`🚀 Accessibility audit server running on port ${PORT}`));
