@@ -18,12 +18,12 @@ You are a web accessibility expert. Analyze the HTML below and return a JSON arr
 
 - "summary": short label of the issue (e.g., "Missing alt text")
 - "priority": one of "critical", "serious", "moderate", or "minor"
-- "selector": a CSS selector or matching hint like "img", "button[aria-label='']", etc.
-- "htmlSnippet": the related HTML line
+- "selector": a CSS selector or matching hint like "img", "a[href='']", etc.
+- "htmlSnippet": a small code snippet
 - "wcag": the WCAG reference (e.g. "1.1.1 Non-text Content")
 - "fix": a brief recommendation
 
-Respond with **only** the JSON array. No intro text.
+Respond with only the JSON array. No explanation.
 
 HTML to analyze:
 ${html}
@@ -44,12 +44,13 @@ ${html}
       }
     });
 
-    const result = response.data.choices[0].message.content;
-    console.log("ChatGPT structured issues:\n", result);
-    res.json({ issues: result });
+    const raw = response.data.choices[0].message.content;
+    const parsed = JSON.parse(raw); // ✅ convert stringified JSON into array
+    res.json({ issues: parsed });
   } catch (e) {
     const status = e?.response?.status || 500;
     const msg = e?.response?.data?.error?.message || e.message;
+    console.error("OpenAI error:", msg);
     res.status(status).json({ error: "Audit failed", details: msg });
   }
 });
